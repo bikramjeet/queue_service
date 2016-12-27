@@ -1,6 +1,6 @@
 {
   "name": "queue_service",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Custom queue operations",
   "main": "index.js",
   "scripts": {
@@ -26,12 +26,21 @@
     "type": "git",
     "url": "https://github.com/bikramjeet/queue_service.git"
   },
-  "keywords": [ 
+  "keywords": [
     "queue",
+    "queueing",
+    "winston",
     "redis",
     "read",
     "write",
-    "delete"
+    "delete",
+    "log",
+    "logging",
+    "logger",
+    "microservice",
+    "microservices",
+    "ipc",
+    "manager"
   ],
   "bugs": {
     "url": "https://github.com/bikramjeet/queue_service/issues"

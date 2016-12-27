@@ -100,7 +100,7 @@ class QueueHandler {
             errMsg = `'Key' is either missing or not in the specified format`;
         } else if (!queueData.value || typeof queueData.value !== "object" || Object.keys(queueData.value).length === 0) {
             errMsg = `'Value' is either missing or not in the specified format`;
-        } else if (!queueData.value.targetType || !(queueData.targetType instanceof Array) || queueData.targetType.length === 0) {
+        } else if (!queueData.value.targetType || !(queueData.value.targetType instanceof Array) || queueData.value.targetType.length === 0) {
             errMsg = `'Target type' is either missing or not in the specified format`;
         } else if (queueData.store !== undefined && (!(queueData.store instanceof Array) || queueData.store.length === 0)) {
             errMsg = `'Store' value is either blank or not in the specified format`;
