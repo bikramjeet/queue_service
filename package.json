@@ -1,0 +1,25 @@
+{
+  "name": "queue_service",
+  "version": "1.0.0",
+  "description": "Custom queue operations",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Bikramjeet Nath",
+  "license": "MIT",
+  "devDependencies": {
+    "gulp": "3.9.0",
+    "gulp-develop-server": "0.5.0",
+    "gulp-jshint": "1.12.0",
+    "jsdoc": "3.4.0",
+    "mocha": "2.3.4",
+    "should": "7.1.1",
+    "supertest": "1.1.0"
+  },
+  "dependencies": {
+    "async": "2.1.4",
+    "moment": "2.17.1",
+    "redis": "2.6.3"
+  }
+}
