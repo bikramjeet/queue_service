@@ -107,9 +107,8 @@ class QueueHandler {
         } else if(callback !== undefined && typeof callback !== "function") {
             throw new Error(`Callback is not a function`);
         } else {
-            queueData.store = (queueData.store === undefined ? new Array() : queueData.store);
             async.eachOf(this.connectionHandler, (value, serviceStore, asyncEachCallback) => {
-                if(queueData.store.length !== 0 && queueData.store.indexOf(serviceStore.toLowerCase()) === -1) {
+                if(queueData.store !== undefined && queueData.store.indexOf(serviceStore.toLowerCase()) === -1) {
                     return asyncEachCallback(null);
                 }
                 switch(serviceStore.toLowerCase()) {
@@ -164,10 +163,9 @@ class QueueHandler {
         } else if(callback === undefined || typeof callback !== "function") {
             throw new Error(`Callback is expected and must be a function`);
         }
-        queueData.store = (queueData.store === undefined ? new Array() : queueData.store);
         let result = {};
         async.eachOf(this.connectionHandler, (value, serviceStore, asyncEachCallback) => {
-            if(queueData.store.length !== 0 && queueData.store.indexOf(serviceStore.toLowerCase()) === -1) {
+            if(queueData.store !== undefined && queueData.store.indexOf(serviceStore.toLowerCase()) === -1) {
                 return asyncEachCallback(null);
             }
             switch(serviceStore.toLowerCase()) {
@@ -225,10 +223,9 @@ class QueueHandler {
         } else if(callback === undefined || typeof callback !== "function") {
             throw new Error(`Callback is expected and must be a function`);
         }
-        queueData.store = (queueData.store === undefined ? new Array() : queueData.store);
         let result = {};
         async.eachOf(this.connectionHandler, (value, serviceStore, asyncEachCallback) => {
-            if(queueData.store.length !== 0 && queueData.store.indexOf(serviceStore.toLowerCase()) === -1) {
+            if(queueData.store !== undefined && queueData.store.indexOf(serviceStore.toLowerCase()) === -1) {
                 return asyncEachCallback(null);
             }
             switch(serviceStore.toLowerCase()) {
@@ -269,10 +266,9 @@ class QueueHandler {
         } else if(callback === undefined || typeof callback !== "function") {
             throw new Error(`Callback is expected and must be a function`);
         }
-        queueData.store = (queueData.store === undefined ? new Array() : queueData.store);
         let result = {};
         async.eachOf(this.connectionHandler, (value, serviceStore, asyncEachCallback) => {
-            if(queueData.store.length !== 0 && queueData.store.indexOf(serviceStore.toLowerCase()) === -1) {
+            if(queueData.store !== undefined && queueData.store.indexOf(serviceStore.toLowerCase()) === -1) {
                 return asyncEachCallback(null);
             }
             switch(serviceStore.toLowerCase()) {
@@ -340,10 +336,9 @@ class QueueHandler {
         } else if(callback !== undefined && typeof callback !== "function") {
             throw new Error(`Callback is not a function`);
         }
-        queueData.store = (queueData.store === undefined ? new Array() : queueData.store);
         let result = {};
         async.eachOf(this.connectionHandler, (value, serviceStore, asyncEachCallback) => {
-            if(queueData.store.length !== 0 && queueData.store.indexOf(serviceStore.toLowerCase()) === -1) {
+            if(queueData.store !== undefined && queueData.store.indexOf(serviceStore.toLowerCase()) === -1) {
                 return asyncEachCallback(null);
             }
             switch(serviceStore.toLowerCase()) {
