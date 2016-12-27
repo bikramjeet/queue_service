@@ -291,8 +291,9 @@ class QueueHandler {
                             async.each(keyList, (name, innerAsyncEachCallback) => {
                                 let dataObj = Object.assign({}, queueData);
                                 dataObj.key = name;
+                                dataObj.store = ['redis'];
                                 this.readFromQueue(dataObj, (err, response) => {
-                                    if(response && response.length) {
+                                    if(response && response.redis && response.redis.length) {
                                         dataObj.value = response.redis;
                                         result.redis.push(dataObj);
                                     }

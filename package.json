@@ -1,6 +1,6 @@
 {
   "name": "queue_service",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Custom queue operations",
   "main": "index.js",
   "scripts": {
