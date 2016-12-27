@@ -21,5 +21,20 @@
     "async": "2.1.4",
     "moment": "2.17.1",
     "redis": "2.6.3"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bikramjeet/queue_service.git"
+  },
+  "keywords": [ 
+    "queue",
+    "redis",
+    "read",
+    "write",
+    "delete"
+  ],
+  "bugs": {
+    "url": "https://github.com/bikramjeet/queue_service/issues"
+  },
+  "homepage": "https://github.com/bikramjeet/queue_service#readme"
 }
