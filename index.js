@@ -5,7 +5,7 @@
 let async = require('async');
 let moment = require('moment');
 let config = require('./config');
-let validator = require('./validator');
+let validator = require('sanitation');
 let redisOperation = require('./redis_io');
 
 /**
@@ -22,9 +22,9 @@ class QueueHandler {
         if (!connectionConfig || typeof connectionConfig !== "object" || connectionConfig instanceof Array || Object.keys(connectionConfig).length === 0) {
             throw new Error(`'Connection config' is either missing or not in the specified format`);
         }
-        let validation = validator.paramsValidator(connectionConfig, config.constructor.schema.elements, "constructor", "schema");
+        let validation = validator.paramsValidator(connectionConfig, config.constructor.schema.elements, config.constructor.schema.elements.mandatory_elements, config.constructor.schema.blank_value);
         if(!validation.success) {
-            throw new Error(validation.response.responseDesc);
+            throw new Error(validation.response.errorMsg);
         } else if (Object.keys(validation.elements).length === 0) {
             throw new Error(`Minimum one valid queue store is required`);
         }
