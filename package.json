@@ -1,6 +1,6 @@
 {
   "name": "queue_service",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Custom queue operations using redis",
   "main": "index.js",
   "scripts": {
