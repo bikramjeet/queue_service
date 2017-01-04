@@ -11,6 +11,18 @@ This is a simple queue service which can be used across various Node.JS applicat
 - Can be used in Monolithic, Microservices as well as Distributed architectures.
 - Can be used for report logs, shared information for persistence etc.
 
+## Table of Contents
+- [Install](#install)
+- [Dependencies](#dependencies)
+- [Use](#use)
+- [Emitter Applications](#emitter-applications) - The source that triggers the data to push into the queue
+  - [pushToQueue](#pushtoqueue) - Push the data to queue
+- [Listener Applications](#listener-applications) - The destination that listens for the new data pushed into the queue
+  - [readKeysAndValuesFromQueue](#readkeysandvaluesfromqueue) - Fetch all the keys along with their values from the queue for the specific identifier
+  - [readKeysFromQueue](#readkeysfromqueue) - Fetch all the keys from the queue for the specific identifier
+  - [readFromQueue](#readfromqueue) - Fetch the value of the specific key from the queue for the specific identifier
+  - [deleteKeyFromQueue](#deletekeyfromqueue) - Delete the record based on key from the queue for the specific identifier
+
 ## Install
 
 ```javascript
@@ -57,6 +69,8 @@ let queueHandler = new queue(connectionConfig);
 
 ### Quick Example
 
+### pushToQueue
+
 ```javascript
 /**
 * Push the data to queue
@@ -89,6 +103,8 @@ queueHandler.pushToQueue(queueData, (err, status) => {
 
 ### Quick Example
 
+### readKeysAndValuesFromQueue
+
 ```javascript
 /**
 * Fetch all the keys along with their values from the queue for the specific identifier
@@ -103,7 +119,11 @@ queueHandler.readKeysAndValuesFromQueue(fetchQueueData, (err, result) => {
     * Define your handler for error and success scenario
     **/
 });
+```
 
+### readKeysFromQueue
+
+```javascript
 /**
 * Fetch all the keys from the queue for the specific identifier
 **/
@@ -117,7 +137,11 @@ queueHandler.readKeysFromQueue(fetchKeyFromQueueData, (err, result) => {
     * Define your handler for error and success scenario
     **/
 });
+```
 
+### readFromQueue
+
+```javascript
 /**
 * Fetch the value of the specific key from the queue for the specific identifier
 **/
@@ -132,7 +156,11 @@ queueHandler.readFromQueue(fetchValueFromQueueData, (err, result) => {
     * Define your handler for error and success scenario
     **/
 });
+```
 
+### deleteKeyFromQueue
+
+```javascript
 /**
 * Delete the record based on key from the queue for the specific identifier
 **/
