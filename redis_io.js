@@ -296,8 +296,11 @@ module.exports = function (config) {
 	   var i = config.length;
 	   while (i--) {
 			var obj = config[i];
-			//var rClient = redis.createClient(obj.port,obj.host);
-			redisClient.push(redis.createClient(obj.port,obj.host));
+			var rClient = redis.createClient(obj.port,obj.host);
+			if(obj.password) {
+				rClient.auth(obj.password);
+			}
+			redisClient.push(rClient);
 	   }
 	   return methods;
    }

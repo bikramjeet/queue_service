@@ -7,7 +7,8 @@ var config = {
                     "queueConnector" : [
                         {
                             "host" : "",
-                            "port" : 0
+                            "port" : 0,
+                            "password" : ""
                         }
                     ],
                     "serviceName" : "",
