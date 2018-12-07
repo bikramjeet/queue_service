@@ -1,6 +1,6 @@
 {
   "name": "queue_service",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Custom queue operations using redis",
   "main": "index.js",
   "scripts": {
@@ -8,15 +8,7 @@
   },
   "author": "Bikramjeet Nath <bkrmjtnath@gmail.com>",
   "license": "MIT",
-  "devDependencies": {
-    "gulp": "3.9.0",
-    "gulp-develop-server": "0.5.0",
-    "gulp-jshint": "1.12.0",
-    "jsdoc": "3.4.0",
-    "mocha": "2.3.4",
-    "should": "7.1.1",
-    "supertest": "1.1.0"
-  },
+  "devDependencies": {},
   "dependencies": {
     "async": "2.1.4",
     "moment": "2.19.3",
