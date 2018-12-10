@@ -1,3 +1,7 @@
+/* jshint node: true */
+/* jshint esnext: true */
+'use strict';
+
 var redis = require("redis");
 var redisClient = []; 
 //client.on("error", function (err) {
@@ -17,12 +21,15 @@ var redisClient = [];
 function setObject(key, value, callback){
 	var rediskey = (typeof key == 'object')?JSON.stringify(sort(key)):key;
 	var i = redisClient.length;
-	while (i--) {
-		redisClient[i].set(rediskey,value, function(err, reply){
+	function setInStore(i) {
+		redisClient[i].set(rediskey,value, (err, reply) => {
 			if( i === 0 ){
 				callback(err,rediskey);
 			}
 		});
+	}
+	while (i--) {
+		new setInStore(i);
 		if( i === 0 )break;
 	}
 }
@@ -67,14 +74,17 @@ function getObject(key, callback, i){
  * */
 function setHashObject(hashsetkey, fieldname, value, callback){
 	var key = (typeof fieldname == 'object')?JSON.stringify(sort(fieldname)):fieldname;
-	var value = (typeof value == 'object')?JSON.stringify(value):value;
+	var val = (typeof value == 'object')?JSON.stringify(value):value;
 	var i = redisClient.length;
-	while (i--) {
-		redisClient[i].hset([hashsetkey, key, value], function(err, reply){
+	function setHashInStore(i) {
+		redisClient[i].hset([hashsetkey, key, val], (err, reply) => {
 			if( i === 0 ){
 				callback(null,key);
 			}
 		});
+	}
+	while (i--) {
+		new setHashInStore(i);
 		if( i === 0 )break;
 	}
 }
@@ -156,7 +166,6 @@ function getAllKeys(callback,i){
  * Please note, any hashkey or listkey will return a null value
  * */
 function getAllValues(callback,i){
-	var valArr =[];
 	i = i || 0;
 	getAllKeys(function(err, keyArr){
 		if(err){
@@ -191,8 +200,8 @@ function delObject(key, callback){
 	//var rediskey = (typeof key == 'object')?sortCompress(key):key;
 	var rediskey = (typeof key == 'object')?JSON.stringify(sort(key)):key;
 	var i = redisClient.length;
-	while (i--) {
-		redisClient[i].del(rediskey,function(err,reply){
+	function delFromStore(i) {
+		redisClient[i].del(rediskey, (err,reply) => {
 			//if(err){
 				//callback(err,null);
 				//return;
@@ -201,6 +210,9 @@ function delObject(key, callback){
 				callback(null,true);
 			}	
 		});
+	}
+	while (i--) {
+		new delFromStore(i);
 		if( i === 0 )break;
 	}
 	
@@ -208,7 +220,7 @@ function delObject(key, callback){
 
 
 function deleteHashKey(hashsetkey, fieldname, callback, i){
-    var key = (typeof fieldname == 'object')?JSON.stringify(sort(fieldname)):fieldname;
+    //var key = (typeof fieldname == 'object')?JSON.stringify(sort(fieldname)):fieldname;
 	i = i || 0;
 	redisClient[i].hdel(hashsetkey, fieldname, function (err, reply) {
 		if(err || reply === null ){
@@ -234,7 +246,7 @@ function deleteHashKey(hashsetkey, fieldname, callback, i){
 function sort(jsonobject){
 	var sortArr = Object.keys(jsonobject).sort();
 	var b ={};
-	for(i=0; i< sortArr.length;i++){
+	for(var i=0; i< sortArr.length;i++){
 		b[sortArr[i]] =  jsonobject[sortArr[i]];
 	}
 	return b;

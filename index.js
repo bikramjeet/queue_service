@@ -2,23 +2,25 @@
 /* jshint esnext: true */
 'use strict';
 
-let async = require('async');
-let moment = require('moment');
-let config = require('./config');
-let validator = require('sanitation');
-let redisOperation = require('./redis_io');
+const async = require('async');
+const moment = require('moment');
+const config = require('./config');
+const validator = require('sanitation');
+const redisOperation = require('./redis_io');
+const ValidQueueFields = require('./ValidateStoreFields');
 
 /**
 * Defines the handlers for pushing and retrieving the data from the queue, default constructor is used for initialization of the instance variable during instantiation of a class.
 * @class QueueHandler
 **/
-class QueueHandler {
+class QueueHandler extends ValidQueueFields {
     
     /**
     * @callback cb Method to be called on complete.
     **/
     
     constructor(connectionConfig) {
+        super();
         if (!connectionConfig || typeof connectionConfig !== "object" || connectionConfig instanceof Array || Object.keys(connectionConfig).length === 0) {
             throw new Error(`'Connection config' is either missing or not in the specified format`);
         }
@@ -92,20 +94,13 @@ class QueueHandler {
     **/
     pushToQueue (queueData, callback) {
         let errMsg = "";
-        if (!queueData || typeof queueData !== "object" || Object.keys(queueData).length === 0) {
-            errMsg = `'Queue data' is either missing or not in the specified format`;
-        } else if (!queueData.identifier || typeof queueData.identifier !== "string" || queueData.identifier.trim() === "") {
-            errMsg = `'Identifier' is either missing or not in the specified format`;
-        } else if (!queueData.key || typeof queueData.key !== "string" || queueData.key.trim() === "") {
-            errMsg = `'Key' is either missing or not in the specified format`;
+        let validInsertFields = this.validateQueueFields(queueData, callback);
+        if(validInsertFields) {
+            errMsg = validInsertFields;
         } else if (!queueData.value || typeof queueData.value !== "object" || Object.keys(queueData.value).length === 0) {
             errMsg = `'Value' is either missing or not in the specified format`;
         } else if (!queueData.value.targetType || !(queueData.value.targetType instanceof Array) || queueData.value.targetType.length === 0) {
             errMsg = `'Target type' is either missing or not in the specified format`;
-        } else if (queueData.store !== undefined && (!(queueData.store instanceof Array) || queueData.store.length === 0)) {
-            errMsg = `'Store' value is either blank or not in the specified format`;
-        } else if(callback !== undefined && typeof callback !== "function") {
-            throw new Error(`Callback is not a function`);
         } else {
             async.eachOf(this.connectionHandler, (value, serviceStore, asyncEachCallback) => {
                 if(queueData.store !== undefined && queueData.store.indexOf(serviceStore.toLowerCase()) === -1) {
@@ -145,37 +140,30 @@ class QueueHandler {
     
     /**
     * Retrieves the data from the queue based on group and key.
-    * @param {Object} queueData Holds the inputs based on which the data is to be fetched from the queue.
-    * @param {String} queueData.identifier Group category name. 
-    * @param {String} queueData.key Unique identifier under the specific group.
-    * @param {Array} [queueData.store] The name of different connectors.
+    * @param {Object} readQueueData Holds the inputs based on which the data from key is to be fetched from the queue.
+    * @param {String} readQueueData.identifier Group category name. 
+    * @param {String} readQueueData.key Unique identifier under the specific group.
+    * @param {Array} [readQueueData.store] The name of different connectors.
     * @param {cb} callback The callback that handles the response.
     **/
-    readFromQueue (queueData, callback) {
-        if (!queueData || typeof queueData !== "object" || Object.keys(queueData).length === 0) {
-            return callback(`'Queue data' is either missing or not in the specified format`);
-        } else if (!queueData.identifier || typeof queueData.identifier !== "string" || queueData.identifier.trim() === "") {
-            return callback(`'Identifier' is either missing or not in the specified format`);
-        } else if (!queueData.key || typeof queueData.key !== "string" || queueData.key.trim() === "") {
-            return callback(`'Key' is either missing or not in the specified format`);
-        } else if (queueData.store !== undefined && (!(queueData.store instanceof Array) || queueData.store.length === 0)) {
-            return callback(`'Store' value is either blank or not in the specified format`);
-        } else if(callback === undefined || typeof callback !== "function") {
-            throw new Error(`Callback is expected and must be a function`);
+    readFromQueue (readQueueData, callback) {
+        let validReadFields = this.validateQueueFields(readQueueData, callback);
+        if(validReadFields) {
+            return callback(validReadFields);
         }
         let result = {};
         async.eachOf(this.connectionHandler, (value, serviceStore, asyncEachCallback) => {
-            if(queueData.store !== undefined && queueData.store.indexOf(serviceStore.toLowerCase()) === -1) {
+            if(readQueueData.store !== undefined && readQueueData.store.indexOf(serviceStore.toLowerCase()) === -1) {
                 return asyncEachCallback(null);
             }
             switch(serviceStore.toLowerCase()) {
                 case 'redis' :
-                    if(value.identifierSet.indexOf(queueData.identifier) === -1) {
-                        return asyncEachCallback(`This service is not registered with redis store for the '${queueData.identifier}' identifier`);
+                    if(value.identifierSet.indexOf(readQueueData.identifier) === -1) {
+                        return asyncEachCallback(`This service is not registered with redis store for the '${readQueueData.identifier}' identifier`);
                     }
                     async.waterfall([
                         (waterfallCallback) => {
-                            value.connection.getHashObject(queueData.identifier, queueData.key, (err, response) => {
+                            value.connection.getHashObject(readQueueData.identifier, readQueueData.key, (err, response) => {
                                 if(response && response.length) {
                                     result.redis = response;
                                 }
@@ -186,7 +174,7 @@ class QueueHandler {
                             if(!response) {
                                 return waterfallCallback(null, response);
                             }
-                            value.connection.setHashObject(this.servicesInfo, `${value.serviceName}_${queueData.identifier}`, (this.redisReadDate || moment(new Date()).format("YYYY-MM-DDTHH:mm:ss")), (err, status) => {
+                            value.connection.setHashObject(this.servicesInfo, `${value.serviceName}_${readQueueData.identifier}`, (this.redisReadDate || moment(new Date()).format("YYYY-MM-DDTHH:mm:ss")), (err, status) => {
                                 /**
                                 * Put any handler if required.
                                 **/
@@ -208,32 +196,27 @@ class QueueHandler {
     
     /**
     * Retrieves the keys from the queue based on group.
-    * @param {Object} queueData Holds the inputs based on which the data is to be fetched from the queue.
-    * @param {String} queueData.identifier Group category name. 
-    * @param {Array} [queueData.store] The name of different connectors.
+    * @param {Object} readKeyQueueData Holds the inputs based on which the data is to be fetched from the queue.
+    * @param {String} readKeyQueueData.identifier Group category name. 
+    * @param {Array} [readKeyQueueData.store] The name of different connectors.
     * @param {cb} callback The callback that handles the response.
     **/
-    readKeysFromQueue (queueData, callback) {
-        if (!queueData || typeof queueData !== "object" || Object.keys(queueData).length === 0) {
-            return callback(`'Queue data' is either missing or not in the specified format`);
-        } else if (!queueData.identifier || typeof queueData.identifier !== "string" || queueData.identifier.trim() === "") {
-            return callback(`'Identifier' is either missing or not in the specified format`);
-        } else if (queueData.store !== undefined && (!(queueData.store instanceof Array) || queueData.store.length === 0)) {
-            return callback(`'Store' value is either blank or not in the specified format`);
-        } else if(callback === undefined || typeof callback !== "function") {
-            throw new Error(`Callback is expected and must be a function`);
+    readKeysFromQueue (readKeyQueueData, callback) {
+        let validReadKeyFields = this.validateQueueFields(readKeyQueueData, callback, {'key' : true});
+        if(validReadKeyFields) {
+            return callback(validReadKeyFields);
         }
         let result = {};
         async.eachOf(this.connectionHandler, (value, serviceStore, asyncEachCallback) => {
-            if(queueData.store !== undefined && queueData.store.indexOf(serviceStore.toLowerCase()) === -1) {
+            if(readKeyQueueData.store !== undefined && readKeyQueueData.store.indexOf(serviceStore.toLowerCase()) === -1) {
                 return asyncEachCallback(null);
             }
             switch(serviceStore.toLowerCase()) {
                 case 'redis' :
-                    if(value.identifierSet.indexOf(queueData.identifier) === -1) {
-                        return asyncEachCallback(`This service is not registered with redis store for the '${queueData.identifier}' identifier`);
+                    if(value.identifierSet.indexOf(readKeyQueueData.identifier) === -1) {
+                        return asyncEachCallback(`This service is not registered with redis store for the '${readKeyQueueData.identifier}' identifier`);
                     }
-                    value.connection.getHashKey(queueData.identifier, (err, response) => {
+                    value.connection.getHashKey(readKeyQueueData.identifier, (err, response) => {
                         if(response && response.length) {
                             result.redis = response;
                         }
@@ -251,34 +234,29 @@ class QueueHandler {
     
     /**
     * Retrieves the key and value from the queue based on group.
-    * @param {Object} queueData Holds the inputs based on which the data is to be fetched from the queue.
-    * @param {String} queueData.identifier Group category name. 
-    * @param {Array} [queueData.store] The name of different connectors.
+    * @param {Object} readKeyValQueueData Holds the inputs based on which the key and value data is to be fetched from the queue.
+    * @param {String} readKeyValQueueData.identifier Group category name. 
+    * @param {Array} [readKeyValQueueData.store] The name of different connectors.
     * @param {cb} callback The callback that handles the response.
     **/
-    readKeysAndValuesFromQueue (queueData, callback) {
-        if (!queueData || typeof queueData !== "object" || Object.keys(queueData).length === 0) {
-            return callback(`'Queue data' is either missing or not in the specified format`);
-        } else if (!queueData.identifier || typeof queueData.identifier !== "string" || queueData.identifier.trim() === "") {
-            return callback(`'Identifier' is either missing or not in the specified format`);
-        } else if (queueData.store !== undefined && (!(queueData.store instanceof Array) || queueData.store.length === 0)) {
-            return callback(`'Store' value is either blank or not in the specified format`);
-        } else if(callback === undefined || typeof callback !== "function") {
-            throw new Error(`Callback is expected and must be a function`);
+    readKeysAndValuesFromQueue (readKeyValQueueData, callback) {
+        let validReadKeyAndValueFields = this.validateQueueFields(readKeyValQueueData, callback, {'key' : true});
+        if(validReadKeyAndValueFields) {
+            return callback(validReadKeyAndValueFields);
         }
         let result = {};
         async.eachOf(this.connectionHandler, (value, serviceStore, asyncEachCallback) => {
-            if(queueData.store !== undefined && queueData.store.indexOf(serviceStore.toLowerCase()) === -1) {
+            if(readKeyValQueueData.store !== undefined && readKeyValQueueData.store.indexOf(serviceStore.toLowerCase()) === -1) {
                 return asyncEachCallback(null);
             }
             switch(serviceStore.toLowerCase()) {
                 case 'redis' :
-                    if(value.identifierSet.indexOf(queueData.identifier) === -1) {
-                        return asyncEachCallback(`This service is not registered with redis store for the '${queueData.identifier}' identifier`);
+                    if(value.identifierSet.indexOf(readKeyValQueueData.identifier) === -1) {
+                        return asyncEachCallback(`This service is not registered with redis store for the '${readKeyValQueueData.identifier}' identifier`);
                     }
                     async.waterfall([
                         (waterfallCallback) => {
-                            value.connection.getHashKey(queueData.identifier, (err, response) => {
+                            value.connection.getHashKey(readKeyValQueueData.identifier, (err, response) => {
                                 this.redisReadDate = moment(new Date()).format("YYYY-MM-DDTHH:mm:ss");
                                 waterfallCallback(err, response);
                             });
@@ -289,7 +267,7 @@ class QueueHandler {
                             }
                             result.redis = [];
                             async.each(keyList, (name, innerAsyncEachCallback) => {
-                                let dataObj = Object.assign({}, queueData);
+                                let dataObj = Object.assign({}, readKeyValQueueData);
                                 dataObj.key = name;
                                 dataObj.store = ['redis'];
                                 this.readFromQueue(dataObj, (err, response) => {
@@ -319,35 +297,28 @@ class QueueHandler {
     
     /**
     * Deletes the data from the queue based on group and key.
-    * @param {Object} queueData Holds the inputs based on which the data is to be fetched from the queue.
-    * @param {String} queueData.identifier Group category name. 
-    * @param {String} queueData.key Unique identifier under the specific group.
-    * @param {Array} [queueData.store] The name of different connectors.
+    * @param {Object} deleteQueueData Holds the inputs based on which the data is to be deleted from the queue.
+    * @param {String} deleteQueueData.identifier Group category name. 
+    * @param {String} deleteQueueData.key Unique identifier under the specific group.
+    * @param {Array} [deleteQueueData.store] The name of different connectors.
     * @param {cb} [callback] The callback that handles the response.
     **/
-    deleteKeyFromQueue (queueData, callback) {
-        if (!queueData || typeof queueData !== "object" || Object.keys(queueData).length === 0) {
-            return callback(`'Queue data' is either missing or not in the specified format`);
-        } else if (!queueData.identifier || typeof queueData.identifier !== "string" || queueData.identifier.trim() === "") {
-            return callback(`'Identifier' is either missing or not in the specified format`);
-        } else if (!queueData.key || typeof queueData.key !== "string" || queueData.key.trim() === "") {
-            return callback(`'Key' is either missing or not in the specified format`);
-        } else if (queueData.store !== undefined && (!(queueData.store instanceof Array) || queueData.store.length === 0)) {
-            return callback(`'Store' value is either blank or not in the specified format`);
-        } else if(callback !== undefined && typeof callback !== "function") {
-            throw new Error(`Callback is not a function`);
+    deleteKeyFromQueue (deleteQueueData, callback) {
+        let validDeleteKeyFields = this.validateQueueFields(deleteQueueData, callback);
+        if(validDeleteKeyFields) {
+            return callback(validDeleteKeyFields);
         }
         let result = {};
         async.eachOf(this.connectionHandler, (value, serviceStore, asyncEachCallback) => {
-            if(queueData.store !== undefined && queueData.store.indexOf(serviceStore.toLowerCase()) === -1) {
+            if(deleteQueueData.store !== undefined && deleteQueueData.store.indexOf(serviceStore.toLowerCase()) === -1) {
                 return asyncEachCallback(null);
             }
             switch(serviceStore.toLowerCase()) {
                 case 'redis' :
-                    if(value.identifierSet.indexOf(queueData.identifier) === -1) {
-                        return asyncEachCallback(`This service is not registered with redis store for the '${queueData.identifier}' identifier`);
+                    if(value.identifierSet.indexOf(deleteQueueData.identifier) === -1) {
+                        return asyncEachCallback(`This service is not registered with redis store for the '${deleteQueueData.identifier}' identifier`);
                     }
-                    value.connection.deleteHashKey(queueData.identifier, queueData.key, (err, response) => {
+                    value.connection.deleteHashKey(deleteQueueData.identifier, deleteQueueData.key, (err, response) => {
                         if(response) {
                             result.redis = response;
                         }
